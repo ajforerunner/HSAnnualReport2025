@@ -3,34 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>H&S Strategy Roadmap — Horizontal</title>
+  <title>BYES‑C H&S Strategy Roadmap — Horizontal</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div>
-        <h1>H&S Strategy Roadmap</h1>
-        <p class="subtitle">Five stages — left → right shows progress toward a more independent organisation</p>
+        <h1>BYES‑C — Health & Safety Strategy Roadmap</h1>
+        <p class="subtitle">Five stages left → right. Each stage contains 100 clusters; clusters animate to show percent complete. Descriptions included below each stage (shadcn-inspired clean UI).</p>
       </div>
 
-      <div class="actions">
+      <div class="controls">
         <button id="replayBtn" class="btn">Replay</button>
-        <button id="exportBtn" class="btn primary">Export PNG</button>
       </div>
     </header>
 
     <section id="roadmap" class="roadmap horizontal" aria-label="Health and Safety roadmap">
-      <!-- Stages injected by script -->
+      <!-- Stage cards injected by script.js -->
     </section>
 
     <footer class="page-footer">
-      <div class="note">Each stage contains 100 clusters — cells animate to show percent complete. Edit percentages in script.js.</div>
+      <div class="note">Tip: open script.js and edit the stagesData array to change stage text, percentages, or colors.</div>
     </footer>
   </main>
 
-  <!-- html2canvas for PNG export -->
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
