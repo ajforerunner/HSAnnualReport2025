@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <title>Safety Insights Dashboard</title>
+    <title>Safety Performance | Annual Review</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;600&display=swap');
         
@@ -17,224 +17,262 @@
             color: #09090b; 
             -webkit-font-smoothing: antialiased; 
         }
+
+        .snap-container {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+        }
+        .snap-section {
+            scroll-snap-align: start;
+            min-height: 100vh;
+            position: relative;
+        }
         
         .number-font { font-family: 'Geist Mono', monospace; }
         .card-shadow { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
         .chart-container { position: relative; height: 320px; width: 100%; }
 
+        /* Animation Styles */
+        .fade-in-up { opacity: 0; transform: translateY(30px); animation: fadeInUp 1s ease-out forwards; }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+
+        @keyframes bounce-slow { 0%, 100% { transform: translateY(-10%); } 50% { transform: translateY(0); } }
+        .animate-bounce-slow { animation: bounce-slow 2s infinite; }
+
+        #scroll-indicator { transition: opacity 0.4s ease; }
+        .stats-hidden { opacity: 0; transform: translateY(20px); transition: all 0.8s ease-out; }
+        .stats-visible { opacity: 1; transform: translateY(0); }
+
         @media print {
             .no-print { display: none; }
+            .snap-container { height: auto; overflow: visible; }
+            .snap-section { height: auto; min-height: 0; padding: 2rem 0; }
         }
     </style>
 </head>
-<body class="p-8 md:p-16">
+<body>
 
-    <div id="capture-area" class="max-w-[1440px] mx-auto">
-        <header class="flex flex-col md:flex-row md:items-center justify-between mb-16 px-2">
-            <div>
-                <h1 class="text-4xl font-bold tracking-tight text-slate-900">Health and Safety Performance</h1>
-                <p class="text-slate-500 mt-2 text-lg">Comprehensive review of 2025 safety metrics vs. 2024</p>
-            </div>
-            <div class="mt-6 md:mt-0 flex items-center gap-10">
-                <div class="flex flex-col items-end">
-                    <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Total Worked Hours</span>
-                    <span class="text-2xl font-bold text-slate-900 number-font tracking-tighter">1,368,995</span>
-                </div>
-                <div class="flex flex-col items-end">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Report</span>
-                    <span class="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        2025 Annual Data
-                    </span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="refreshDashboard()" class="no-print h-10 px-4 rounded-md border border-slate-200 bg-white text-xs font-medium hover:bg-slate-50 transition-colors flex items-center gap-2">
-                        <i class="fas fa-sync-alt"></i>
-                        Refresh
-                    </button>
-                    <button onclick="downloadDashboard()" class="no-print h-10 px-4 rounded-md border border-slate-200 bg-white text-xs font-medium hover:bg-slate-50 transition-colors">
-                        Export Image
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <section class="mb-16">
-            <div class="flex items-center gap-4 mb-8 px-2">
-                <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">01. Accidents</h2>
-                <div class="h-px flex-1 bg-slate-200"></div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-slate-900 rounded-xl p-8 shadow-lg text-white">
-                    <p class="text-sm font-medium text-slate-400 mb-6 uppercase tracking-wider">Total Accidents</p>
-                    <div class="flex items-end justify-between mb-8">
-                        <span id="accidents-count" class="text-6xl font-bold italic number-font">0</span>
-                        <div class="text-right">
-                            <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Vs 2024</span>
-                            <span class="text-2xl font-bold text-slate-300">25</span>
+    <div id="scroll-wrapper" class="snap-container">
+        
+        <section class="snap-section bg-white p-8 md:p-20 flex items-center">
+            <div class="max-w-7xl mx-auto w-full">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                    <div class="lg:col-span-7">
+                        <div class="fade-in-up flex items-center gap-3 mb-6">
+                            <span class="w-12 h-[2px] bg-emerald-500"></span>
+                            <span class="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em]">2025 Safety Milestone</span>
+                        </div>
+                        <h1 class="fade-in-up delay-1 text-5xl md:text-7xl font-bold tracking-tighter text-slate-900 mb-8 leading-[0.9]">
+                            Safety First.<br/>
+                            <span class="text-slate-400">Excellence Always.</span>
+                        </h1>
+                        <div class="fade-in-up delay-2 aspect-video w-full bg-slate-100 rounded-3xl overflow-hidden mb-8 border border-slate-200 relative group">
+                            <img src="https://raw.githubusercontent.com/ajforerunner/HSAnnualReport2025/main/SJH_5490.jpg" alt="Site Operation" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        </div>
+                        <div class="fade-in-up delay-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <span class="block text-2xl font-bold number-font text-slate-900 leading-none mb-1 italic">1.36M</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Worked Hours</span>
+                            </div>
+                            <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                                <span class="block text-2xl font-bold number-font text-emerald-600 leading-none mb-1 italic">ZERO</span>
+                                <span class="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">LTA</span>
+                            </div>
+                            <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                                <span class="block text-2xl font-bold number-font text-emerald-600 leading-none mb-1 italic">ZERO</span>
+                                <span class="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">RIDDOR</span>
+                            </div>
+                            <div class="p-4 bg-slate-900 rounded-2xl border border-slate-800">
+                                <span class="block text-2xl font-bold number-font text-emerald-400 leading-none mb-1 italic">-64%</span>
+                                <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Reduction</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                        <div class="bg-emerald-400 h-full w-[36%]"></div>
-                    </div>
-                    <p class="mt-4 text-xs font-bold text-emerald-400 uppercase tracking-widest">-64% Reduction</p>
-                </div>
-
-                <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
-                    <p class="text-sm font-medium text-slate-500 mb-6 uppercase tracking-wider">Lost Time Accidents (LTA)</p>
-                    <div class="flex items-center gap-3 mb-8">
-                        <span class="text-5xl font-bold tracking-tighter number-font">0</span>
-                        <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
-                    </div>
-                    <div class="pt-6 border-t border-slate-100 flex flex-col gap-1 mb-4">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">VS 2024</span>
-                        <div class="flex items-center gap-3 mt-1">
-                            <span class="text-sm font-medium text-slate-300 line-through">1 </span>
-                            <i class="fas fa-arrow-right text-[10px] text-slate-300"></i>
-                            <span class="text-sm font-bold text-emerald-600">0</span>
-                        </div>
-                    </div>
-                    <p class="text-[11px] font-medium text-slate-400 italic border-t border-slate-50 pt-3">
-                        * Non-RIDDOR Accidents
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
-                    <p class="text-sm font-medium text-slate-500 mb-6 uppercase tracking-wider">RIDDOR</p>
-                    <div class="flex items-center gap-3 mb-8">
-                        <span class="text-5xl font-bold tracking-tighter number-font">0</span>
-                        <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
-                    </div>
-                    <div class="pt-6 border-t border-slate-100 flex flex-col gap-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">vs 2024</span>
-                        <div class="flex items-center gap-3 mt-1">
-                            <span class="text-sm font-medium text-slate-300 line-through">2</span>
-                            <i class="fas fa-arrow-right text-[10px] text-slate-300"></i>
-                            <span class="text-sm font-bold text-emerald-600">0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-emerald-50/30 rounded-xl border border-emerald-100 p-8 card-shadow">
-                    <p class="text-sm font-medium text-emerald-700 mb-6 uppercase tracking-wider font-bold">Lost Days</p>
-                    <div class="flex items-center gap-3 mb-8">
-                        <span class="text-5xl font-bold tracking-tighter number-font text-emerald-600">0</span>
-                        <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
-                    </div>
-                    <div class="pt-6 border-t border-emerald-100 flex flex-col gap-1">
-                        <span class="text-[10px] font-bold text-emerald-600/60 uppercase tracking-wider">vs 2024</span>
-                        <div class="flex items-center gap-3 mt-1">
-                            <span class="text-sm font-medium text-emerald-200 line-through">20</span>
-                            <i class="fas fa-arrow-right text-[10px] text-slate-300"></i>
-                            <span class="text-sm font-bold text-emerald-600">0</span>
+                    <div class="lg:col-span-5 h-full">
+                        <div class="fade-in-up delay-3 bg-slate-900 rounded-[2.5rem] p-10 md:p-14 text-white relative h-full flex flex-col justify-center overflow-hidden">
+                            <i class="fas fa-quote-left text-slate-800 text-8xl absolute -top-4 -left-4"></i>
+                            <div class="relative z-10">
+                                <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-8">Director's Statement</h3>
+                                <p class="text-xl md:text-2xl text-slate-200 font-light leading-relaxed italic mb-12">
+                                    "Achieving zero Lost Time Accidents and RIDDOR incidents this year is a testament to our team's unwavering commitment."
+                                </p>
+                                <div class="flex items-center gap-4 border-t border-slate-800 pt-8">
+                                    <img src="https://raw.githubusercontent.com/ajforerunner/HSAnnualReport2025/main/Screenshot_20250619_151145_WhatsApp.jpg" alt="Director Profile" class="w-16 h-16 rounded-full object-cover border-2 border-emerald-500 shadow-xl" style="object-position: 50% 15%;">
+                                    <div>
+                                        <p class="font-bold text-white text-lg leading-none">Operations Director</p>
+                                        <p class="text-sm text-slate-500 mt-2 tracking-wide uppercase">Strategic Leadership</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="mb-16">
-            <div class="flex items-center gap-4 mb-8 px-2">
-                <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">02. KPI</h2>
-                <div class="h-px flex-1 bg-slate-200"></div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
-                    <div class="flex justify-between items-start mb-6">
-                        <span class="text-sm font-medium text-slate-500">Global Frequency (GFR)</span>
-                        <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">-60.1%</span>
-                    </div>
-                    <div id="gfr-count" class="text-5xl font-bold tracking-tighter number-font mb-8">0.00</div>
-                    <div class="pt-6 border-t border-slate-100 flex justify-between items-center">
-                        <span class="text-sm text-slate-400">vs 2024</span>
-                        <span class="text-sm font-semibold text-slate-700">16.49</span>
-                    </div>
+        <section class="snap-section bg-slate-50 p-8 md:p-20 flex items-center">
+            <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div class="rounded-[2.5rem] overflow-hidden shadow-2xl h-[550px] border border-white">
+                    <img src="https://raw.githubusercontent.com/ajforerunner/HSAnnualReport2025/main/SJH_4738.jpg" alt="Highlight Image" class="w-full h-full object-cover">
                 </div>
-
-                <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
-                    <div class="mb-6"><span class="text-sm font-medium text-slate-500">Frequency Rate (FR)</span></div>
-                    <div class="flex items-center gap-3 mb-8">
-                        <span class="text-5xl font-bold tracking-tighter number-font">0</span>
-                        <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
-                    </div>
-                    <div class="pt-6 border-t border-slate-100 flex flex-col gap-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">VS 2024</span>
-                        <div class="flex items-center gap-3">
-                            <span class="text-sm font-medium text-slate-300 line-through">1.32</span>
-                            <i class="fas fa-arrow-right text-[10px] text-slate-300"></i>
-                            <span class="text-sm font-bold text-emerald-600">0.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
-                    <div class="mb-6"><span class="text-sm font-medium text-slate-500">Accident Frequency (AFR)</span></div>
-                    <div class="flex items-center gap-3 mb-8">
-                        <span class="text-5xl font-bold tracking-tighter number-font">0</span>
-                        <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
-                    </div>
-                    <div class="pt-6 border-t border-slate-100 flex flex-col gap-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">VS 2024</span>
-                        <div class="flex items-center gap-3">
-                            <span class="text-sm font-medium text-slate-300 line-through">0.132</span>
-                            <i class="fas fa-arrow-right text-[10px] text-slate-300"></i>
-                            <span class="text-sm font-bold text-emerald-600">0.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
-                    <div class="mb-6"><span class="text-sm font-medium text-slate-500">Severity Rate (SR)</span></div>
-                    <div class="flex items-center gap-3 mb-8">
-                        <span class="text-5xl font-bold tracking-tighter number-font">0</span>
-                        <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
-                    </div>
-                    <div class="pt-6 border-t border-slate-100 flex flex-col gap-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">VS 2024</span>
-                        <div class="flex items-center gap-3">
-                            <span class="text-sm font-medium text-slate-300 line-through">0.0132</span>
-                            <i class="fas fa-arrow-right text-[10px] text-slate-300"></i>
-                            <span class="text-sm font-bold text-emerald-600">0.00</span>
-                        </div>
-                    </div>
+                <div>
+                    <h2 class="text-4xl md:text-5xl font-bold tracking-tighter text-slate-900 mb-8">Key Highlights <span class="text-emerald-600">2025</span></h2>
+                    <ul class="space-y-6">
+                        <li class="flex gap-4">
+                            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-emerald-600 shrink-0"><i class="fas fa-check"></i></div>
+                            <div>
+                                <h4 class="font-bold text-slate-900 italic">Culture Evolution</h4>
+                                <p class="text-slate-500 leading-relaxed">Launched our new hazard observation portal with 100% staff adoption.</p>
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-emerald-600 shrink-0"><i class="fas fa-check"></i></div>
+                            <div>
+                                <h4 class="font-bold text-slate-900 italic">Training Excellence</h4>
+                                <p class="text-slate-500 leading-relaxed">Achieved 98% compliance in specialized high-risk modules across all teams.</p>
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-emerald-600 shrink-0"><i class="fas fa-check"></i></div>
+                            <div>
+                                <h4 class="font-bold text-slate-900 italic">Industry Benchmark</h4>
+                                <p class="text-slate-500 leading-relaxed">Recorded zero RIDDOR incidents, surpassing industry safety averages.</p>
+                            </div>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </section>
 
-        <section class="mb-16">
-            <div class="flex items-center gap-4 mb-8 px-2">
-                <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">03. Trends & Analytics</h2>
-                <div class="h-px flex-1 bg-slate-200"></div>
-            </div>
+        <section id="dashboard-target" class="snap-section p-8 md:p-16 flex items-start justify-center">
+            <div id="capture-area" class="max-w-[1440px] mx-auto w-full stats-hidden">
+                <header class="flex flex-col md:flex-row md:items-center justify-between mb-16 px-2">
+                    <div>
+                        <h1 class="text-4xl font-bold tracking-tight text-slate-900">Health and Safety Performance</h1>
+                        <p class="text-slate-500 mt-2 text-lg">Comprehensive review of 2025 safety metrics vs. 2024</p>
+                    </div>
+                    <div class="mt-6 md:mt-0 flex items-center gap-10">
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Total Worked Hours</span>
+                            <span class="text-2xl font-bold text-slate-900 number-font tracking-tighter">1,368,995</span>
+                        </div>
+                        <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-sm font-semibold">2025 Annual Data</span></div>
+                    </div>
+                </header>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
-                    <p class="text-sm font-semibold text-slate-900 tracking-tight mb-8">Global Frequency Trend (GFR)</p>
-                    <div class="chart-container">
-                        <canvas id="gfrChart"></canvas>
+                <div class="flex items-center gap-4 mb-8 px-2"><h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">01. Accidents</h2><div class="h-px flex-1 bg-slate-200"></div></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+                    <div class="bg-slate-900 rounded-xl p-8 shadow-lg text-white">
+                        <p class="text-sm font-medium text-slate-400 mb-6 uppercase tracking-wider">Total Accidents</p>
+                        <div class="flex items-end justify-between mb-8">
+                            <span id="accidents-count" class="text-6xl font-bold italic number-font">0</span>
+                            <div class="text-right"><span class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Vs 2024</span><span class="text-2xl font-bold text-slate-300">25</span></div>
+                        </div>
+                        <div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden"><div class="bg-emerald-400 h-full w-[36%]"></div></div>
+                        <p class="mt-4 text-xs font-bold text-emerald-400 uppercase tracking-widest">-64% Reduction</p>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
+                        <p class="text-sm font-medium text-slate-500 mb-6 uppercase tracking-wider">LTA</p>
+                        <div class="flex items-center gap-3 mb-8"><span class="text-5xl font-bold tracking-tighter number-font">0</span><i class="fas fa-check-circle text-emerald-500 text-xl"></i></div>
+                        <div class="pt-6 border-t border-slate-100"><span class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">VS 2024</span><div class="flex items-center gap-3 mt-1 text-sm font-bold">1 <i class="fas fa-arrow-right text-[12px] text-slate-300"></i> <span class="text-emerald-600">0</span></div></div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
+                        <p class="text-sm font-medium text-slate-500 mb-6 uppercase tracking-wider">RIDDOR</p>
+                        <div class="flex items-center gap-3 mb-8"><span class="text-5xl font-bold tracking-tighter number-font">0</span><i class="fas fa-check-circle text-emerald-500 text-xl"></i></div>
+                        <div class="pt-6 border-t border-slate-100"><span class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">VS 2024</span><div class="flex items-center gap-3 mt-1 text-sm font-bold">2 <i class="fas fa-arrow-right text-[12px] text-slate-300"></i> <span class="text-emerald-600">0</span></div></div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
+                        <p class="text-sm font-medium text-slate-500 mb-6 uppercase tracking-wider">Lost Days</p>
+                        <div class="flex items-center gap-3 mb-8"><span class="text-5xl font-bold tracking-tighter number-font">0</span><i class="fas fa-check-circle text-emerald-500 text-xl"></i></div>
+                        <div class="pt-6 border-t border-slate-100"><span class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">VS 2024</span><div class="flex items-center gap-3 mt-1 text-sm font-bold">20 <i class="fas fa-arrow-right text-[12px] text-slate-300"></i> <span class="text-emerald-600">0</span></div></div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
-                    <div class="flex justify-between items-center mb-8">
-                        <p class="text-sm font-semibold text-slate-900 tracking-tight">Rates Trend (FR/AFR/SR)</p>
-                        <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Zero hit in July</span>
+                <div class="flex items-center gap-4 mb-8 px-2"><h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">02. KPI</h2><div class="h-px flex-1 bg-slate-200"></div></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+                    <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
+                        <div class="flex justify-between items-start mb-6"><span class="text-sm font-medium text-slate-500">GFR</span><span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">-60.1%</span></div>
+                        <div id="gfr-count" class="text-5xl font-bold tracking-tighter number-font mb-8">0.00</div>
+                        <div class="pt-6 border-t border-slate-100 flex justify-between items-center"><span class="text-sm text-slate-400">vs 2024</span><span class="text-sm font-semibold text-slate-700">16.49</span></div>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="ratesChart"></canvas>
+                    <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
+                        <span class="text-sm font-medium text-slate-500 block mb-6">FR</span>
+                        <div class="flex items-center gap-3 mb-8"><span class="text-5xl font-bold tracking-tighter number-font">0</span><i class="fas fa-check-circle text-emerald-500 text-xl"></i></div>
+                        <div class="pt-6 border-t border-slate-100 flex items-center gap-3"><span class="text-[12px] text-slate-400">VS 2024</span><span class="text-sm font-bold">1.32 <i class="fas fa-arrow-right text-[10px] text-slate-300"></i> <span class="text-emerald-600">0.00</span></span></div>
                     </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
+                        <span class="text-sm font-medium text-slate-500 block mb-6">AFR</span>
+                        <div class="flex items-center gap-3 mb-8"><span class="text-5xl font-bold tracking-tighter number-font">0</span><i class="fas fa-check-circle text-emerald-500 text-xl"></i></div>
+                        <div class="pt-6 border-t border-slate-100 flex items-center gap-3"><span class="text-[12px] text-slate-400">VS 2024</span><span class="text-sm font-bold">0.132 <i class="fas fa-arrow-right text-[10px] text-slate-300"></i> <span class="text-emerald-600">0.00</span></span></div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow">
+                        <span class="text-sm font-medium text-slate-500 block mb-6">SR</span>
+                        <div class="flex items-center gap-3 mb-8"><span class="text-5xl font-bold tracking-tighter number-font">0</span><i class="fas fa-check-circle text-emerald-500 text-xl"></i></div>
+                        <div class="pt-6 border-t border-slate-100 flex items-center gap-3"><span class="text-[12px] text-slate-400">VS 2024</span><span class="text-sm font-bold">0.0132 <i class="fas fa-arrow-right text-[10px] text-slate-300"></i> <span class="text-emerald-600">0.00</span></span></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow"><p class="text-sm font-semibold mb-8">Global Frequency Trend (GFR)</p><div class="chart-container"><canvas id="gfrChart"></canvas></div></div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-8 card-shadow"><p class="text-sm font-semibold mb-8">Rates Trend (FR/AFR/SR)</p><div class="chart-container"><canvas id="ratesChart"></canvas></div></div>
                 </div>
             </div>
         </section>
+
+        <section class="snap-section bg-slate-900 text-white p-8 md:p-24 flex items-center overflow-hidden">
+            <div class="max-w-7xl mx-auto w-full relative z-10">
+                <div class="flex items-center gap-3 mb-8">
+                    <span class="w-12 h-[2px] bg-emerald-500"></span>
+                    <span class="text-xs font-bold text-emerald-400 uppercase tracking-[0.3em]">Strategy 2026</span>
+                </div>
+                <h2 class="text-6xl md:text-7xl font-bold tracking-tighter mb-16 leading-tight">
+                    Beyond Compliance.<br/>
+                    <span class="text-slate-500">Operational Excellence.</span>
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="p-10 bg-slate-800/50 rounded-3xl border border-slate-700 hover:border-emerald-500/50 transition-colors group">
+                        <div class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-slate-900 mb-8 shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform"><i class="fas fa-microchip text-xl"></i></div>
+                        <h4 class="text-xl font-bold mb-4">Tech-Driven Safety</h4>
+                        <p class="text-slate-400 leading-relaxed font-light">Deploying AI-driven predictive analytics to identify site risks before they manifest into incidents.</p>
+                    </div>
+                    <div class="p-10 bg-slate-800/50 rounded-3xl border border-slate-700 hover:border-emerald-500/50 transition-colors group">
+                        <div class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-slate-900 mb-8 shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform"><i class="fas fa-users-viewfinder text-xl"></i></div>
+                        <h4 class="text-xl font-bold mb-4">Behavioral Leadership</h4>
+                        <p class="text-slate-400 leading-relaxed font-light">Extending 'Safety First' mentorship to sub-contractors, ensuring unified standards across the entire project lifecycle.</p>
+                    </div>
+                    <div class="p-10 bg-slate-800/50 rounded-3xl border border-slate-700 hover:border-emerald-500/50 transition-colors group">
+                        <div class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-slate-900 mb-8 shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform"><i class="fas fa-shield-heart text-xl"></i></div>
+                        <h4 class="text-xl font-bold mb-4">Wellbeing Integration</h4>
+                        <p class="text-slate-400 leading-relaxed font-light">Evolving health and safety into a holistic 'Total Worker Health' model, focusing on mental and physical resilience.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute top-0 right-0 w-1/2 h-full bg-emerald-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        </section>
+
+        <div id="scroll-indicator" class="fixed bottom-8 left-1/2 -translate-x-1/2 text-center no-print z-50">
+            <i class="fas fa-chevron-down text-slate-300 animate-bounce-slow text-xl"></i>
+        </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
-    // Animation Function for Numbers
+    const scrollContainer = document.getElementById('scroll-wrapper');
+    const indicator = document.getElementById('scroll-indicator');
+
+    scrollContainer.addEventListener('scroll', () => {
+        const threshold = scrollContainer.scrollHeight - scrollContainer.clientHeight - 80;
+        indicator.style.opacity = scrollContainer.scrollTop >= threshold ? '0' : '1';
+    });
+
     function animateValue(id, start, end, duration, decimals = 0) {
         const obj = document.getElementById(id);
+        if(!obj) return;
         let startTimestamp = null;
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
@@ -245,135 +283,56 @@
         window.requestAnimationFrame(step);
     }
 
-    function refreshDashboard() {
-        animateValue("accidents-count", 0, 9, 1500, 0);
-        animateValue("gfr-count", 0, 6.57, 1500, 2);
-        Chart.instances.forEach(chart => {
-            chart.reset();
-            chart.update();
-        });
-    }
-
-    window.onload = refreshDashboard;
-
-    // Data transcribed from provided sources
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const gfrData = [17.67, 14.96, 13.02, 12.96, 12.51, 9.97, 8.83, 8.34, 7.10, 6.46, 6.46, 6.57];
-    const frData = [1.31, 1.30, 1.30, 1.30, 0.66, 0.66, 0, 0, 0, 0, 0, 0];
-    const afrData = [0.13, 0.13, 0.06, 0.06, 0.06, 0.066, 0, 0, 0, 0, 0, 0];
-    const srData = [0.013, 0.013, 0.013, 0.013, 0.012, 0.009, 0, 0, 0, 0, 0, 0];
-
-    Chart.defaults.font.family = "'Geist', sans-serif";
-    Chart.defaults.color = "#94a3b8";
-    Chart.register(ChartDataLabels);
-
-    // GFR Chart with Data Labels for Jan & Dec
-    new Chart(document.getElementById('gfrChart'), {
-        type: 'line',
-        data: {
-            labels: months,
-            datasets: [{
-                data: gfrData,
-                borderColor: '#0f172a',
-                borderWidth: 2,
-                fill: true,
-                backgroundColor: 'rgba(15, 23, 42, 0.03)',
-                tension: 0.4,
-                pointRadius: (ctx) => [0, 11].includes(ctx.dataIndex) ? 5 : 0,
-                pointBackgroundColor: '#0f172a',
-                datalabels: {
-                    display: (ctx) => [0, 11].includes(ctx.dataIndex),
-                    align: 'top',
-                    offset: 8,
-                    color: '#0f172a',
-                    font: { weight: 'bold', size: 11 }
+    document.addEventListener('DOMContentLoaded', () => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    document.getElementById('capture-area').classList.add('stats-visible');
+                    animateValue("accidents-count", 0, 9, 1500, 0);
+                    animateValue("gfr-count", 0, 6.57, 1500, 2);
+                    initCharts();
+                    observer.unobserve(entry.target);
                 }
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 2000, easing: 'easeOutQuart' },
-            plugins: { legend: { display: false }, datalabels: { display: true } },
-            scales: {
-                y: { 
-            border: { display: false }, 
-            grid: { color: '#f1f5f9' },
-            beginAtZero: true,
-            max: 20 
-        },
-                x: { border: { display: false }, grid: { display: false } }
-            }
-        }
+            });
+        }, { threshold: 0.15 });
+        observer.observe(document.getElementById('dashboard-target'));
     });
 
-    // Rates Chart with Data Labels for Jan & June (Zero hit)
-    new Chart(document.getElementById('ratesChart'), {
-        type: 'line',
-        data: {
-            labels: months,
-            datasets: [
-                {
-                    label: 'FR (Red)',
-                    data: frData,
-                    borderColor: '#ef4444',
+    function initCharts() {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        Chart.register(ChartDataLabels);
+        Chart.defaults.font.family = "'Geist', sans-serif";
+
+        new Chart(document.getElementById('gfrChart'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    data: [17.67, 14.96, 13.02, 12.96, 12.51, 9.97, 8.83, 8.34, 7.10, 6.46, 6.46, 6.57],
+                    borderColor: '#355dbd',
                     borderWidth: 2,
+                    fill: true,
+                    backgroundColor: 'rgba(232, 239, 255, 0.7)',
                     tension: 0.4,
-                    pointRadius: (ctx) => [0, 5].includes(ctx.dataIndex) ? 4 : 0,
-                    datalabels: {
-                        display: (ctx) => [0, 5].includes(ctx.dataIndex),
-                        align: 'top',
-                        color: '#ef4444',
-                        font: { weight: 'bold', size: 10 }
-                    }
-                },
-                {
-                    label: 'AFR',
-                    data: afrData,
-                    borderColor: '#991b1b',
-                    borderWidth: 1.5,
-                    tension: 0.4,
-                    pointRadius: (ctx) => [0, 5].includes(ctx.dataIndex) ? 3 : 0,
-                    datalabels: {
-                        display: (ctx) => [0, 5].includes(ctx.dataIndex),
-                        align: 'top',
-                        color: '#991b1b',
-                        font: { weight: 'bold', size: 10 }
-                    }
-                },
-                {
-                    label: 'SR',
-                    data: srData,
-                    borderColor: '#d97706',
-                    borderWidth: 1,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    datalabels: { display: false }
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 2500, easing: 'easeOutQuart' },
-            plugins: { 
-                legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: '600' } } },
-                datalabels: { display: true }
+                    pointRadius: (ctx) => [0, 11].includes(ctx.dataIndex) ? 6 : 0,
+                    pointBackgroundColor: '#355dbd',
+                    datalabels: { display: (ctx) => [0, 11].includes(ctx.dataIndex), align: 'top', color: '#355dbd', font: { weight: 'bold' } }
+                }]
             },
-            scales: {
-                y: { display: true, border: { display: false }, grid: { color: '#f1f5f9' } },
-                x: { border: { display: false }, grid: { display: false } }
-            }
-        }
-    });
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 20 } } }
+        });
 
-    function downloadDashboard() {
-        const element = document.getElementById('capture-area');
-        html2canvas(element, { scale: 4, useCORS: true, backgroundColor: "#fafafa" }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = 'Safety-Performance-2025-Full.png';
-            link.href = canvas.toDataURL("image/png", 1.0);
-            link.click();
+        new Chart(document.getElementById('ratesChart'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [
+                    { label: 'FR (Red)', data: [1.31, 1.30, 1.30, 1.30, 0.66, 0.66, 0, 0, 0, 0, 0, 0], borderColor: '#ef4444', borderWidth: 2, tension: 0.4, pointRadius: (ctx) => [0, 5].includes(ctx.dataIndex) ? 4 : 0, datalabels: { display: (ctx) => [0, 5].includes(ctx.dataIndex), align: 'top', color: '#ef4444' } },
+                    { label: 'AFR', data: [0.13, 0.13, 0.06, 0.06, 0.06, 0.066, 0, 0, 0, 0, 0, 0], borderColor: '#991b1b', borderWidth: 1.5, tension: 0.4, pointRadius: 0 },
+                    { label: 'SR', data: [0.013, 0.013, 0.013, 0.013, 0.012, 0.009, 0, 0, 0, 0, 0, 0], borderColor: '#d97706', borderWidth: 1, tension: 0.4, pointRadius: 0 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
         });
     }
     </script>
